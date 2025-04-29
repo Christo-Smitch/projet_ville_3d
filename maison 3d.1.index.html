@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ville 3D avec Véhicules</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <script>
+        // Configuration de la scène, de la caméra et du rendu
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lumières
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        // Sol
+        const geometrySol = new THREE.PlaneGeometry(100, 100);
+        const materialSol = new THREE.MeshBasicMaterial({ color: 0x008800 });
+        const sol = new THREE.Mesh(geometrySol, materialSol);
+        sol.rotation.x = -Math.PI / 2;
+        scene.add(sol);
+
+        // Routes
+        function createRoad(x, z, width, height) {
+            const geometry = new THREE.PlaneGeometry(width, height);
+            const material = new THREE.MeshBasicMaterial({ color: 0x444444 });
+            const road = new THREE.Mesh(geometry, material);
+            road.rotation.x = -Math.PI / 2;
+            road.position.set(x, 0.02, z);
+            scene.add(road);
+        }
+
+        createRoad(0, -10, 50, 6);
+        createRoad(0, 10, 50, 6);
+        createRoad(-10, 0, 6, 50);
+        createRoad(10, 0, 6, 50);
+
+        // Bâtiments
+        function createBuilding(x, z, width, height, depth, color) {
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const material = new THREE.MeshBasicMaterial({ color });
+            const building = new THREE.Mesh(geometry, material);
+            building.position.set(x, height / 2, z);
+            scene.add(building);
+        }
+
+        for (let i = -40; i <= 40; i += 10) {
+            for (let j = -40; j <= 40; j += 10) {
+                if (Math.abs(i) > 10 || Math.abs(j) > 10) {
+                    const width = Math.random() * 4 + 3;
+                    const depth = Math.random() * 4 + 3;
+                    const height = Math.random() * 15 + 5;
+                    const color = Math.random() * 0xffffff;
+                    createBuilding(i, j, width, height, depth, color);
+                }
+            }
+        }
+
+        // Arbres
+        function createTree(x, z) {
+            const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.5, 2);
+            const trunkMaterial = new THREE.MeshBasicMaterial({ color: 0x8B4513 });
+            const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+            trunk.position.set(x, 1, z);
+            scene.add(trunk);
+
+            const foliageGeometry = new THREE.SphereGeometry(1.5);
+            const foliageMaterial = new THREE.MeshBasicMaterial({ color: 0x228B22 });
+            const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+            foliage.position.set(x, 3, z);
+            scene.add(foliage);
+        }
+
+        for (let i = -40; i <= 40; i += 15) {
+            for (let j = -40; j <= 40; j += 15) {
+                if (Math.abs(i) > 10 || Math.abs(j) > 10) {
+                    createTree(i, j);
+                }
+            }
+        }
+
+        // Véhicules
+        function createVehicle(x, z, color) {
+            const geometry = new THREE.BoxGeometry(2, 1, 4);
+            const material = new THREE.MeshBasicMaterial({ color });
+            const vehicle = new THREE.Mesh(geometry, material);
+            vehicle.position.set(x, 0.5, z);
+            scene.add(vehicle);
+            return vehicle;
+        }
+
+        const vehicles = [];
+        for (let i = -20; i <= 20; i += 6) {
+            vehicles.push(createVehicle(i, -10, 0xff0000));
+            vehicles.push(createVehicle(i, 10, 0x0000ff));
+        }
+
+        // Animation des véhicules
+        function animateVehicles() {
+            vehicles.forEach((vehicle, index) => {
+                if (index % 2 === 0) {
+                    vehicle.position.z += 0.1;
+                    if (vehicle.position.z > 20) vehicle.position.z = -20;
+                } else {
+                    vehicle.position.z -= 0.1;
+                    if (vehicle.position.z < -20) vehicle.position.z = 20;
+                }
+            });
+        }
+
+        // Positionnement initial de la caméra
+        camera.position.set(0, 50, 100);
+
+        // Animation de la caméra avec mouvement lent
+        function animateCamera() {
+            const time = Date.now() * 0.0005;
+            camera.position.x = Math.sin(time) * 80;
+            camera.position.z = Math.cos(time) * 80;
+            camera.lookAt(scene.position);
+        }
+
+        // Animation principale
+        function animate() {
+            requestAnimationFrame(animate);
+            animateVehicles();
+            animateCamera();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
